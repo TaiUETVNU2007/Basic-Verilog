@@ -5,7 +5,7 @@ module tb_Nbit_cmp();
     reg [N-1:0] P, Q;
     wire PGTQ , PEQQ , PLTQ ;
     integer ii , errors ;
-    Vr8bitcmp UUT(
+    VrNbitcmp UUT(
         .P(P),
         .Q(Q),
         .PGTQ(PGTQ),
