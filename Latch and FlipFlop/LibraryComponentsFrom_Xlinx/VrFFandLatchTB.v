@@ -1,34 +1,82 @@
-`timescale 1 ns / 100 ps
-module VrFFandLatchTB ();
-reg Tclk, G1, G2, GE, CLR, PR, D1, D2;
-wire Q1, Q2, Q3, Q4, Q5, Q6;
-VrFFandLatches UUT ( .CLK(Tclk), .D1(D1), .D2(D2),
- .G1(G1), .G2(G2), .GE(GE), .CLR(CLR), .PR(PR),
- .Q({Q1,Q2,Q3,Q4,Q5,Q6}) ); // instantiate UUT
-always begin // create free-running test clock with 20 ns period
- #0.2 Tclk = 1; #10; // 10 ns high (tiny offset for
- Tclk = 0; #9.8; // 10 ns low waveform readability)
-end
-always begin // Change D1 and D2 on a 15 ns cycle
- #2 D1 = ~D1; D2 = ~D2; // offset 2 ns from Tclk edges
- #5 D2 = ~D2;
- #5 D1 = ~D1; #3 ;
-end
-always begin // Change G1 every 20 ns and G2 every 30 ns,
- #4 G1 = ~G1; G2 = ~G2; // offset 4 ns
- #20 G1 = ~G1; #10 G2 = ~G2; #10 G1 = ~G1; #16 ;
-end
-always begin // Change GE every 60 ns, offset 2 ns
- #2 GE = ~GE; #58 ;
-end
-initial begin // Here's what to do starting at time 0
- CLR = 1; PR = 1; // Apply clear and preset
- D1 = 0; D2 = 1; // Initialize D inputs for desired waveform
- GE = 0; G1 = 0; G2 = 0; // Latches are initially closed
- #100 // Wait 100 ns for FPGA global reset
- #15 // Nothing should happen yet
- CLR = 0; PR = 0; // Now negate clear and preset
- #300 // Run another 300 ns
- $stop(1); // End test
-end
+`timescale 1ns / 1ps
+
+module VrFFandLatchTB;
+
+  // 1. Khai báo tín hiệu kết nối
+  reg Tclk;
+  reg D1, D2;
+  reg G1, G2, GE;
+  reg CLR, PR;
+  wire [1:6] Q;
+
+  // 2. Gọi (Instantiate) Module Cần Kiểm Trử (DUT - Device Under Test)
+  VrFFandLatches UUT (
+      .Tclk(Tclk),
+      .D1(D1),
+      .D2(D2),
+      .G1(G1),
+      .G2(G2),
+      .GE(GE),
+      .CLR(CLR),
+      .PR(PR),
+      .Q(Q)
+  );
+
+  // 3. Tạo Xung Nhịp Tclk (Chu kỳ 20ns)
+  initial Tclk = 0;
+  always begin
+    #0.2 Tclk = 1;
+    #10  Tclk = 0;
+    #9.8 ;
+  end
+
+  // 4. Khởi tạo và Biến đổi Dữ liệu D1, D2 (Chu kỳ 15ns)
+  initial begin
+    D1 = 0; D2 = 1;
+  end
+  always begin
+    #2  D1 = ~D1; D2 = ~D2;
+    #5  D2 = ~D2;
+    #5  D1 = ~D1;
+    #3  ;
+  end
+
+  // 5. Điều khiển Tín hiệu Cho phép G1, G2
+  initial begin
+    G1 = 0; G2 = 0;
+  end
+  always begin
+    #4  G1 = ~G1; G2 = ~G2;
+    #20 G1 = ~G1;
+    #10 G2 = ~G2;
+    #10 G1 = ~G1;
+    #16 ;
+  end
+
+  // 6. Điều khiển Tín hiệu Cho phép Toàn cục GE (Chu kỳ 60ns)
+  initial GE = 0;
+  always begin
+    #2  GE = ~GE;
+    #58 ;
+  end
+
+  // 7. Khởi tạo Tín hiệu Reset/Preset (CLR, PR) & Cấu hình Dump Waveform Cadence
+  initial begin
+    // Trạng thái ban đầu: Kích hoạt Reset & Preset để ép trạng thái mạch
+    CLR = 1; 
+    PR  = 1;
+
+    #115;
+    // Rút Reset và Preset về 0 để giải phóng mạch chạy bình thường
+    CLR = 0; 
+    PR  = 0;
+
+    #300;
+
+    // --- CẤU HÌNH DUMP WAVEFORM CHO CADENCE XCELIUM ---
+    $shm_open("waves.shm"); // Mở database tạo thư mục waves.shm
+    $shm_probe("AC");       // Probe toàn bộ các tín hiệu (A) và tầng con (C)
+    $stop;
+  end
+
 endmodule
