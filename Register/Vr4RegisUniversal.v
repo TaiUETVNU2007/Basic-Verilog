@@ -1,15 +1,14 @@
 module Vr4RegisUniversal (
     input            CLK, 
-    input            CLR,   // Synch clear (xóa đồng bộ)
-    input            Lin,   // Input dịch từ bên trái vào MSB (Shift Right)
-    input            Rin,   // Input dịch từ bên phải vào LSB (Shift Left)
-    input      [1:0] SEL,   // Mã chọn chức năng
-    input      [3:0] D,     // Dữ liệu nạp song song
+    input            CLR,   //xóa
+    input            Lin,   // MSB (Shift Right)
+    input            Rin,   // LSB (Shift Left)
+    input      [1:0] SEL,   // Mã chọn chức năng (Mux 4to1) chọn HOLD , SHIFT_LEFT, SHIFT_RIGHT, LOAD
+    input      [3:0] D,     //  nạp song song
     output reg [3:0] Q
 );
-
     // Định nghĩa tham số trạng thái điều khiển
-    parameter HOLD        = 2'b00,
+    localparam HOLD        = 2'b00,
               SHIFT_LEFT  = 2'b01,
               SHIFT_RIGHT = 2'b10, 
               LOAD        = 2'b11;
